@@ -9,6 +9,35 @@
 
 extern UsersIdDB usersIdDatabase;
 int global_current_line_approvals = 0;
+int global_valability = 2;
+
+int endsWithConfirm(const char* str) {
+    const char* confirmStr = "CONFIRM";
+    size_t strLen = strlen(str);
+    size_t confirmLen = strlen(confirmStr);
+
+    // Check if the string is long enough to contain "CONFIRM" at the end
+    if (strLen < confirmLen) {
+        return 0; // False
+    }
+
+    // Compare the end of the string with "CONFIRM"
+    return strcmp(str + strLen - confirmLen, confirmStr) == 0;
+}
+
+void delete_confirm(char *token) {
+    // Find the substring "CONFIRM"
+    char *confirmPosition = strstr(token, "CONFIRM");
+
+    // Check if "CONFIRM" is found in the string
+    if (confirmPosition != NULL) {
+        // Calculate the length of the part before "CONFIRM"
+        size_t prefixLength = confirmPosition - token;
+
+        // Truncate the string at the position of "CONFIRM"
+        token[prefixLength] = '\0';
+    }
+}
 
 char **
 request_authorization_func_1_svc(char **argp, struct svc_req *rqstp)
@@ -59,12 +88,52 @@ struct request_access_token *
 request_access_token_func_1_svc(struct request_authorization *argp, struct svc_req *rqstp)
 {
 	static struct request_access_token  result;
+	if (endsWithConfirm(argp->token)){
+		for(int i = 0; i < usersIdDatabase.number_of_access_tokens; i++){
+			if (strcmp(usersIdDatabase.access_token_list[i].client_id, argp->client_id) == 0){
+				//memory leak
+				char* generated_token = generate_access_token(argp->token);
+				delete_confirm(generated_token);
+
+				usersIdDatabase.access_token_list[i].access_token = generated_token;
+				usersIdDatabase.access_token_list[i].refresh_token = generate_access_token(usersIdDatabase.access_token_list[i].access_token);
+				usersIdDatabase.access_token_list[i].valability = global_valability;
+
+				result.access_token = usersIdDatabase.access_token_list[i].access_token;
+				result.refresh_token = usersIdDatabase.access_token_list[i].refresh_token;
+				result.validation_time = global_valability;
+				strcpy(result.error, "");
+
+				printf("Modified:\n%s %s %s %d\n",usersIdDatabase.access_token_list[i].client_id,usersIdDatabase.access_token_list[i].access_token,usersIdDatabase.access_token_list[i].refresh_token,usersIdDatabase.access_token_list[i].valability);
+				return &result;
+			}
+		}
+		char* generated_token = generate_access_token(argp->token);
+		delete_confirm(generated_token);
+
+		usersIdDatabase.access_token_list = realloc(usersIdDatabase.access_token_list, (usersIdDatabase.number_of_access_tokens + 1) * sizeof(AccessToken));
+		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token = generated_token;
+		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token = generate_access_token(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token);
+		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].client_id = strdup(argp->client_id);
+		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].valability = global_valability;
+
+		result.access_token = strdup(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token);
+		result.refresh_token = strdup(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token);
+		result.validation_time = global_valability;
+		result.error = strdup("");
+		printf("Added:\n%s %s %s %d\n",usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].client_id,usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token,usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token,usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].valability);
+		usersIdDatabase.number_of_access_tokens++;
+		return &result;
+	} else {
+		result.error = strdup("REQUEST_DENIED");
+		return &result;
+	}
 
 	/*
 	 * insert server code here
 	 */
-
-	return &result;
+	return NULL;
+	// return &result;
 }
 
 char **

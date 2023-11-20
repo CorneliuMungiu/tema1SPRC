@@ -5,9 +5,9 @@ struct request_authorization {
 
 struct request_access_token {
     string access_token<>;
-    string regenerate_token<>;
-    int auto_refresh;
+    string refresh_token<>;
     int validation_time;
+    string error<>;
 };
 
 struct validate_delegated_action {

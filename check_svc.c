@@ -301,8 +301,8 @@ void read_approvals(char* path, struct users_id_database *db){
 
 UsersIdDB usersIdDatabase;
 
-
-int main (int argc, char **argv)
+int
+main (int argc, char **argv)
 {
 	char path[255] = "tests/test1/userIDs.db"; 
 	char path1[255] = "tests/test1/resources.db";
@@ -320,6 +320,8 @@ int main (int argc, char **argv)
 	usersIdDatabase.number_of_approvals_colums = 0;
 	usersIdDatabase.signed_tokens_permisions = NULL;
 	usersIdDatabase.number_of_signed_tokens_permisions = 0;
+	usersIdDatabase.access_token_list = NULL;
+	usersIdDatabase.number_of_access_tokens = 0;
 
 
     // Call the function

@@ -54,8 +54,10 @@ checkprog_1(char *host)
 	if (result_4 == (char **) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
-	
+	request_access_token_func_1_arg.client_id = strdup("X5B0TWjmeNtU3vd");
+	request_access_token_func_1_arg.token = *result_4;
 	result_2 = request_access_token_func_1(&request_access_token_func_1_arg, clnt);
+
 	if (result_2 == (struct request_access_token *) NULL) {
 		clnt_perror (clnt, "call failed");
 	}

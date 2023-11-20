@@ -24,11 +24,11 @@ xdr_request_access_token (XDR *xdrs, request_access_token *objp)
 
 	 if (!xdr_string (xdrs, &objp->access_token, ~0))
 		 return FALSE;
-	 if (!xdr_string (xdrs, &objp->regenerate_token, ~0))
-		 return FALSE;
-	 if (!xdr_int (xdrs, &objp->auto_refresh))
+	 if (!xdr_string (xdrs, &objp->refresh_token, ~0))
 		 return FALSE;
 	 if (!xdr_int (xdrs, &objp->validation_time))
+		 return FALSE;
+	 if (!xdr_string (xdrs, &objp->error, ~0))
 		 return FALSE;
 	return TRUE;
 }

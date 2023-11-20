@@ -26,9 +26,9 @@ typedef struct request_authorization request_authorization;
 
 struct request_access_token {
 	char *access_token;
-	char *regenerate_token;
-	int auto_refresh;
+	char *refresh_token;
 	int validation_time;
+	char *error;
 };
 typedef struct request_access_token request_access_token;
 
@@ -57,6 +57,16 @@ struct signed_token_permisions {
 
 typedef struct signed_token_permisions SignedTokenPermisions;
 
+struct access_token_refresh_token {
+	char *client_id;
+	char *access_token;
+	char *refresh_token;
+	unsigned int valability;
+	int8_t auto_refresh;
+};
+
+typedef struct access_token_refresh_token AccessToken;
+
 struct users_id_database {
 	unsigned int number_of_users;
 	char** users;
@@ -69,6 +79,8 @@ struct users_id_database {
 	unsigned int number_of_approvals_colums;
 	SignedTokenPermisions* signed_tokens_permisions;
 	unsigned int number_of_signed_tokens_permisions;
+	AccessToken *access_token_list;
+	unsigned int number_of_access_tokens;
 };
 
 typedef struct users_id_database UsersIdDB;
