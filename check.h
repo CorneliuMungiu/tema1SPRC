@@ -8,6 +8,7 @@
 #define USERS_ID_LENGTH 16
 #define ERROR_LENGTH 40 //must be greater than USERS_ID_LENGTH
 #define LINE_LENGTH 256
+#define SIGNED_TOKEN_LEN 30
 
 #include <rpc/rpc.h>
 
@@ -49,6 +50,13 @@ struct approvals_database {
 
 typedef struct approvals_database ApprovalsDB;
 
+struct signed_token_permisions {
+	char* token;
+	ApprovalsDB* approvals;
+};
+
+typedef struct signed_token_permisions SignedTokenPermisions;
+
 struct users_id_database {
 	unsigned int number_of_users;
 	char** users;
@@ -59,9 +67,12 @@ struct users_id_database {
 	ApprovalsDB** approvals;
 	unsigned int number_of_approvals_lines;
 	unsigned int number_of_approvals_colums;
+	SignedTokenPermisions* signed_tokens_permisions;
+	unsigned int number_of_signed_tokens_permisions;
 };
 
 typedef struct users_id_database UsersIdDB;
+
 
 #define CHECKPROG 0x1DBC0
 #define CHECKVERS 1

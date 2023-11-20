@@ -8,6 +8,7 @@
 #include "token.h"
 
 extern UsersIdDB usersIdDatabase;
+int global_current_line_approvals = 0;
 
 char **
 request_authorization_func_1_svc(char **argp, struct svc_req *rqstp)
@@ -81,11 +82,23 @@ validate_delegated_action_func_1_svc(struct validate_delegated_action *argp, str
 char **
 approve_request_token_func_1_svc(char **argp, struct svc_req *rqstp)
 {
+	if(usersIdDatabase.approvals[global_current_line_approvals][0].name == NULL){
+		global_current_line_approvals++;
+		return argp;
+	}
 	static char * result;
+	char* signed_token = calloc(SIGNED_TOKEN_LEN, sizeof(char));
+	strcpy(signed_token, *argp);
+	strcat(signed_token, "CONFIRM");
+	usersIdDatabase.signed_tokens_permisions = realloc(usersIdDatabase.signed_tokens_permisions, (usersIdDatabase.number_of_signed_tokens_permisions + 1) * sizeof(SignedTokenPermisions));
+	usersIdDatabase.signed_tokens_permisions[usersIdDatabase.number_of_signed_tokens_permisions].token = signed_token;
+	usersIdDatabase.signed_tokens_permisions[usersIdDatabase.number_of_signed_tokens_permisions].approvals = usersIdDatabase.approvals[global_current_line_approvals];
+	usersIdDatabase.number_of_signed_tokens_permisions++;
+	result = strdup(signed_token);
+	global_current_line_approvals++;
 
-	/*
-	 * insert server code here
-	 */
-
+	for(int i = 0; i < usersIdDatabase.number_of_signed_tokens_permisions; i++){
+		printf("%d = %s\n",i,usersIdDatabase.signed_tokens_permisions[i].token);
+	}
 	return &result;
 }

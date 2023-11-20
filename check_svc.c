@@ -232,10 +232,14 @@ void add_permision_to_approvals(ApprovalsDB** approvals_database_line, char* per
 }
 
 void add_excepted_permision(ApprovalsDB* approvals_database_line, struct users_id_database *db){
+	if (approvals_database_line[0].name == NULL){
+		// printf("===========\n");
+		return;
+	}
 
 	for (int i = 0; i < db->number_of_resources; i++){
 		if(!is_permision_in_approval(approvals_database_line, db->resources[i], db->number_of_resources)){
-			printf("%s\n",db->resources[i]);
+			// printf("%s\n",db->resources[i]);
 			add_permision_to_approvals(&approvals_database_line, db->resources[i], db->number_of_resources);
 		}
 	}
@@ -314,6 +318,8 @@ int main (int argc, char **argv)
 	usersIdDatabase.approvals = NULL;
 	usersIdDatabase.number_of_approvals_lines = 0;
 	usersIdDatabase.number_of_approvals_colums = 0;
+	usersIdDatabase.signed_tokens_permisions = NULL;
+	usersIdDatabase.number_of_signed_tokens_permisions = 0;
 
 
     // Call the function
@@ -321,7 +327,7 @@ int main (int argc, char **argv)
 	read_resources(path1, &usersIdDatabase);
 	read_approvals(path2, &usersIdDatabase);
 	// printf("%d\n",is_approval_in_resources("UserDatas", &usersIdDatabase));
-	printf("%s\n",usersIdDatabase.approvals[0][0].name);
+	// printf("%s\n",usersIdDatabase.approvals[0][0].name);
 
 
 	register SVCXPRT *transp;

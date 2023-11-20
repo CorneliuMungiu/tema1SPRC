@@ -19,7 +19,7 @@ checkprog_1(char *host)
 	request_authorization_func_2_arg = calloc(20, sizeof(char));
 	request_authorization_func_2_arg = "74xaLqdTDdHZ9ey";
 	struct request_access_token  *result_2;
-	struct request_authorization  request_access_token_func_1_arg;
+	struct request_authorization request_access_token_func_1_arg;
 	char * *result_3;
 	struct validate_delegated_action  validate_delegated_action_func_1_arg;
 	char * *result_4;
@@ -38,18 +38,27 @@ checkprog_1(char *host)
 	if (result_1 == (char **) NULL) {
 		clnt_perror (clnt, "call failed");
 	}
-	// result_2 = request_access_token_func_1(&request_access_token_func_1_arg, clnt);
-	// if (result_2 == (struct request_access_token *) NULL) {
-	// 	clnt_perror (clnt, "call failed");
-	// }
 	// result_3 = validate_delegated_action_func_1(&validate_delegated_action_func_1_arg, clnt);
 	// if (result_3 == (char **) NULL) {
 	// 	clnt_perror (clnt, "call failed");
 	// }
+	approve_request_token_func_1_arg = *result_1;
+	result_4 = approve_request_token_func_1(&approve_request_token_func_1_arg, clnt);
+	// approve_request_token_func_1_arg = "bababa";
 	// result_4 = approve_request_token_func_1(&approve_request_token_func_1_arg, clnt);
-	// if (result_4 == (char **) NULL) {
-	// 	clnt_perror (clnt, "call failed");
-	// }
+	// approve_request_token_func_1_arg = "lalalal";
+	// result_4 = approve_request_token_func_1(&approve_request_token_func_1_arg, clnt);
+	// approve_request_token_func_1_arg = "lalalal";
+	// result_4 = approve_request_token_func_1(&approve_request_token_func_1_arg, clnt);
+	// printf("%s\n", *result_4);
+	if (result_4 == (char **) NULL) {
+		clnt_perror (clnt, "call failed");
+	}
+	
+	result_2 = request_access_token_func_1(&request_access_token_func_1_arg, clnt);
+	if (result_2 == (struct request_access_token *) NULL) {
+		clnt_perror (clnt, "call failed");
+	}
 #ifndef	DEBUG
 	clnt_destroy (clnt);
 #endif	 /* DEBUG */
