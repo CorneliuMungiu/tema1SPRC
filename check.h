@@ -7,6 +7,7 @@
 #define _CHECK_H_RPCGEN
 #define USERS_ID_LENGTH 16
 #define ERROR_LENGTH 40 //must be greater than USERS_ID_LENGTH
+#define LINE_LENGTH 256
 
 #include <rpc/rpc.h>
 
@@ -35,12 +36,31 @@ struct validate_delegated_action {
 };
 typedef struct validate_delegated_action validate_delegated_action;
 
+struct approvals_database {
+	char* name;
+	int8_t read;
+	int8_t insert;
+	int8_t modify;
+	int8_t delete;
+	int8_t execute;
+};
+
+typedef struct approvals_database ApprovalsDB;
+
 struct users_id_database {
 	unsigned int number_of_users;
 	char** users;
+	request_authorization* authz_tokens;
+	unsigned int number_of_authz_tokens;
+	char** resources;
+	unsigned int number_of_resources;
+	ApprovalsDB** approvals;
+	unsigned int number_of_approvals_lines;
+	unsigned int number_of_approvals_colums;
 };
 
 typedef struct users_id_database UsersIdDB;
+
 
 #define CHECKPROG 0x1DBC0
 #define CHECKVERS 1

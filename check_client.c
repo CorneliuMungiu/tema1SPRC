@@ -15,6 +15,9 @@ checkprog_1(char *host)
 	char * request_authorization_func_1_arg;
 	request_authorization_func_1_arg = calloc(20, sizeof(char));
 	request_authorization_func_1_arg = "X5B0TWjmeNtU3vd";
+	char * request_authorization_func_2_arg;
+	request_authorization_func_2_arg = calloc(20, sizeof(char));
+	request_authorization_func_2_arg = "74xaLqdTDdHZ9ey";
 	struct request_access_token  *result_2;
 	struct request_authorization  request_access_token_func_1_arg;
 	char * *result_3;
@@ -31,6 +34,7 @@ checkprog_1(char *host)
 #endif	/* DEBUG */
 
 	result_1 = request_authorization_func_1(&request_authorization_func_1_arg, clnt);
+	// result_1 = request_authorization_func_1(&request_authorization_func_2_arg, clnt);
 	if (result_1 == (char **) NULL) {
 		clnt_perror (clnt, "call failed");
 	}

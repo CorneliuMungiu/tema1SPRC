@@ -22,7 +22,28 @@ request_authorization_func_1_svc(char **argp, struct svc_req *rqstp)
             char *token = generate_access_token(argp[0]);
             strcpy(result, token);
             free(token); // Remember to free the allocated token after use
-			printf("%s\n",result);
+			if(usersIdDatabase.number_of_authz_tokens == 0) {
+				usersIdDatabase.number_of_authz_tokens++;
+				usersIdDatabase.authz_tokens = calloc(usersIdDatabase.number_of_authz_tokens,sizeof(request_authorization));
+				usersIdDatabase.authz_tokens[0].client_id = strdup(argp[0]);
+				usersIdDatabase.authz_tokens[0].token = strdup(result);	
+			}
+
+			for (unsigned int j = 0; j < usersIdDatabase.number_of_authz_tokens; j++){
+				if (strcmp(argp[0],usersIdDatabase.authz_tokens[j].client_id) == 0){
+					strcpy(usersIdDatabase.authz_tokens[j].token, result);
+					break;
+				}
+				//User not found
+				if (j == usersIdDatabase.number_of_authz_tokens - 1){
+					usersIdDatabase.authz_tokens = realloc(usersIdDatabase.authz_tokens, (usersIdDatabase.number_of_authz_tokens + 1) * sizeof(request_authorization));
+					usersIdDatabase.number_of_authz_tokens++;
+					usersIdDatabase.authz_tokens[usersIdDatabase.number_of_authz_tokens - 1].client_id = strdup(argp[0]);
+					usersIdDatabase.authz_tokens[usersIdDatabase.number_of_authz_tokens - 1].token = strdup(result);
+				}
+			}
+			// printf("%s %s\n",usersIdDatabase.authz_tokens[0].client_id, usersIdDatabase.authz_tokens[0].token);
+			// printf("%s %s\n",usersIdDatabase.authz_tokens[1].client_id, usersIdDatabase.authz_tokens[1].token);
             return &result;
         }
     }

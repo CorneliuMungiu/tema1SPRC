@@ -126,18 +126,202 @@ void allocate_users_id_db(char* path, struct users_id_database *db) {
     fclose(file);
 }
 
+void read_resources(char* path, struct users_id_database *db){
+	FILE *file = fopen(path, "r");
+
+    if (file == NULL) {
+        fprintf(stderr, "Error opening file: %s\n", path);
+        return;
+    }
+	if (fscanf(file, "%u", &(db->number_of_resources)) != 1) {
+        fprintf(stderr, "Error reading the number of resources.\n");
+        fclose(file);
+        return;
+    }
+
+	// Allocate memory for resources array
+    db->resources = (char**)malloc(db->number_of_resources * sizeof(char*));
+    if (db->resources == NULL) {
+        fprintf(stderr, "Memory allocation error.\n");
+        fclose(file);
+        return;
+    }
+
+	char id[200];
+    // Read and store each ID
+    for (unsigned int i = 0; i < db->number_of_resources; ++i) {
+        if (fscanf(file, "%199s", id) != 1) {
+            fprintf(stderr, "Error reading resource %u.\n", i + 1);
+            free(db->resources); // Free allocated memory
+            fclose(file);
+            return;
+        }
+
+        // Allocate memory for each user ID and copy the string
+        db->resources[i] = strdup(id);
+        if (db->resources[i] == NULL) {
+            fprintf(stderr, "Memory allocation error.\n");
+            // Cleanup: Free previously allocated memory
+            for (unsigned int j = 0; j < i; ++j) {
+                free(db->resources[j]);
+            }
+            free(db->resources);
+            fclose(file);
+            return;
+        }
+	}
+}
+
+int is_approval_in_resources(char* approval, struct users_id_database *db) {
+	for (unsigned int i = 0; i < db->number_of_resources; i++) {
+		if (strcmp(approval, db->resources[i]) == 0){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void reset_all_permisions(ApprovalsDB* approvals_database){
+	approvals_database->read = 0;
+	approvals_database->delete = 0;
+	approvals_database->execute = 0;
+	approvals_database->insert = 0;
+	approvals_database->modify = 0;
+}
+
+void add_permisions(ApprovalsDB* approvals_database, char permision){
+	if (permision == 'R'){
+		approvals_database->read = 1;
+	} else if (permision == 'D'){
+		approvals_database->delete = 1;
+	} else if (permision == 'X'){
+		approvals_database->execute = 1;
+	} else if (permision == 'I'){
+		approvals_database->insert = 1;
+	} else if (permision == 'M'){
+		approvals_database->modify = 1;
+	}
+}
+
+int is_permision_in_approval(ApprovalsDB* approvals_database_line, char* permision, int length){
+	if (permision[strlen(permision) - 1] == '\n') {
+			permision[strlen(permision) - 1] = '\0';
+	}
+
+	for(int i = 0; i < length; i++){
+		if(approvals_database_line[i].name == NULL)
+			return 0;
+		if(strcmp(approvals_database_line[i].name, permision) == 0){
+			return 1;
+		}
+	}
+	return 0;
+}
+
+void add_permision_to_approvals(ApprovalsDB** approvals_database_line, char* permision, int length){
+	// printf("aa\n");
+	ApprovalsDB* approvals = *approvals_database_line;
+	for(int i = 0; i < length; i++){
+		// printf("bb\n");
+		if (approvals[i].name == NULL){
+			// printf("aa\n");
+			// printf("%p\n",*approvals_database_line[i]->name);
+			approvals[i].name = strdup(permision);
+			return;
+		}
+	}
+}
+
+void add_excepted_permision(ApprovalsDB* approvals_database_line, struct users_id_database *db){
+
+	for (int i = 0; i < db->number_of_resources; i++){
+		if(!is_permision_in_approval(approvals_database_line, db->resources[i], db->number_of_resources)){
+			printf("%s\n",db->resources[i]);
+			add_permision_to_approvals(&approvals_database_line, db->resources[i], db->number_of_resources);
+		}
+	}
+
+	for (int i = 0; i < db->number_of_approvals_lines; i++) {
+		for (int j = 0; j < db->number_of_approvals_colums; j ++) {
+
+		}
+	}
+}
+
+void read_approvals(char* path, struct users_id_database *db){
+    FILE *file = fopen(path, "r");
+
+    if (file == NULL) {
+        perror("Error opening file");
+        exit(EXIT_FAILURE);
+    }
+
+    char line[LINE_LENGTH];
+    while (fgets(line, sizeof(line), file) != NULL) {
+		db->approvals = realloc(db->approvals, (db->number_of_approvals_lines + 1) * sizeof(ApprovalsDB*));
+		db->number_of_approvals_lines++;
+        char *substring = strtok(line, ",");
+		int counter = 0;
+		db->approvals[db->number_of_approvals_lines - 1] = calloc(db->number_of_resources, sizeof(ApprovalsDB));
+		for (int i = 0; i < db->number_of_resources; i++){
+			reset_all_permisions(&db->approvals[db->number_of_approvals_lines - 1][i]);
+		}
+        while (substring != NULL) {
+			if(is_approval_in_resources(substring, db)){
+				db->approvals[db->number_of_approvals_lines - 1][counter].name = strdup(substring);
+				substring = strtok(NULL, ",");
+				for (unsigned int i = 0; i < strlen(substring); i++){
+					add_permisions(&db->approvals[db->number_of_approvals_lines - 1][counter], substring[i]);
+				}
+			}
+			counter++;
+            substring = strtok(NULL, ",");
+        }
+    }
+	for (int i = 0; i < db->number_of_approvals_lines; i++){
+			add_excepted_permision(db->approvals[i], db);
+	}
+	db->number_of_approvals_colums = db->number_of_resources;
+	for (int i = 0; i < db->number_of_approvals_lines; i++) {
+		for (int j = 0; j < db->number_of_approvals_colums; j ++) {
+			// if(&db->approvals[i][j].name == NULL){
+
+				printf("%s ", db->approvals[i][j].name);
+				printf("%d %d %d %d %d\n",db->approvals[i][j].delete, db->approvals[i][j].execute, db->approvals[i][j].insert, db->approvals[i][j].modify, db->approvals[i][j].read);
+			// }
+		}
+		printf("\n");
+	}
+    fclose(file);
+}
+
+
 UsersIdDB usersIdDatabase;
 
 int main (int argc, char **argv)
 {
 	char path[255] = "tests/test1/userIDs.db"; 
+	char path1[255] = "tests/test1/resources.db";
+	char path2[255] = "tests/test1/approvals.db";
 
     // Initialize the struct members
     usersIdDatabase.number_of_users = 0;
+	usersIdDatabase.number_of_authz_tokens = 0;
     usersIdDatabase.users = NULL;
+	usersIdDatabase.authz_tokens = NULL;
+	usersIdDatabase.resources = NULL;
+	usersIdDatabase.number_of_resources = 0;
+	usersIdDatabase.approvals = NULL;
+	usersIdDatabase.number_of_approvals_lines = 0;
+	usersIdDatabase.number_of_approvals_colums = 0;
+
 
     // Call the function
     allocate_users_id_db(path, &usersIdDatabase);
+	read_resources(path1, &usersIdDatabase);
+	read_approvals(path2, &usersIdDatabase);
+	// printf("%d\n",is_approval_in_resources("UserDatas", &usersIdDatabase));
+	printf("%s\n",usersIdDatabase.approvals[0][0].name);
 
 	register SVCXPRT *transp;
 
