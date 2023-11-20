@@ -78,7 +78,6 @@ checkprog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 	return;
 }
 
-
 void allocate_users_id_db(char* path, struct users_id_database *db) {
     FILE *file = fopen(path, "r");
 
@@ -298,6 +297,7 @@ void read_approvals(char* path, struct users_id_database *db){
 
 UsersIdDB usersIdDatabase;
 
+
 int main (int argc, char **argv)
 {
 	char path[255] = "tests/test1/userIDs.db"; 
@@ -322,6 +322,7 @@ int main (int argc, char **argv)
 	read_approvals(path2, &usersIdDatabase);
 	// printf("%d\n",is_approval_in_resources("UserDatas", &usersIdDatabase));
 	printf("%s\n",usersIdDatabase.approvals[0][0].name);
+
 
 	register SVCXPRT *transp;
 

@@ -26,6 +26,8 @@ typedef struct request_authorization request_authorization;
 struct request_access_token {
 	char *access_token;
 	char *regenerate_token;
+	int auto_refresh;
+	int validation_time;
 };
 typedef struct request_access_token request_access_token;
 
@@ -60,7 +62,6 @@ struct users_id_database {
 };
 
 typedef struct users_id_database UsersIdDB;
-
 
 #define CHECKPROG 0x1DBC0
 #define CHECKVERS 1

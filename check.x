@@ -1,17 +1,19 @@
 struct request_authorization {
-    char* client_id;
-    char* token;
+    string client_id<>;
+    string token<>;
 };
 
 struct request_access_token {
-    char* access_token;
-    char* regenerate_token;
+    string access_token<>;
+    string regenerate_token<>;
+    int auto_refresh;
+    int validation_time;
 };
 
 struct validate_delegated_action {
-    char* operation_type;
-    char* accessed_resource;
-    char* token;
+    string operation_type<>;
+    string accessed_resource<>;
+    string token<>;
 };
 
 program CHECKPROG {
