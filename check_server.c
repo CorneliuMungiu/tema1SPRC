@@ -39,6 +39,15 @@ void delete_confirm(char *token) {
     }
 }
 
+int is_in_resources(char* resource){
+	for (int i = 0; i < usersIdDatabase.number_of_resources; i++){
+		if (strcmp(usersIdDatabase.resources[i], resource) == 0){
+			return 1;
+		}
+	}
+	return 0;
+}
+
 char **
 request_authorization_func_1_svc(char **argp, struct svc_req *rqstp)
 {
@@ -90,6 +99,7 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 	static struct request_access_token  result;
 	if (endsWithConfirm(argp->token)){
 		for(int i = 0; i < usersIdDatabase.number_of_access_tokens; i++){
+			//Can be extracted in another function
 			if (strcmp(usersIdDatabase.access_token_list[i].client_id, argp->client_id) == 0){
 				//memory leak
 				char* generated_token = generate_access_token(argp->token);
@@ -128,18 +138,18 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 		result.error = strdup("REQUEST_DENIED");
 		return &result;
 	}
-
-	/*
-	 * insert server code here
-	 */
-	return NULL;
-	// return &result;
 }
 
 char **
 validate_delegated_action_func_1_svc(struct validate_delegated_action *argp, struct svc_req *rqstp)
 {
 	static char * result;
+	for (int i = 0; i < usersIdDatabase.number_of_access_tokens; i++){
+		if(strcmp(usersIdDatabase.access_token_list[i].access_token, argp->token) == 0) {
+			
+		}
+	}
+	result = strdup("PERMISION_DENIED");
 
 	/*
 	 * insert server code here
