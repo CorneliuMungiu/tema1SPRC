@@ -9,19 +9,16 @@
 
 extern UsersIdDB usersIdDatabase;
 int global_current_line_approvals = 0;
-int global_valability = 2;
+extern int global_valability;
 
 int endsWithConfirm(const char* str) {
     const char* confirmStr = "CONFIRM";
     size_t strLen = strlen(str);
     size_t confirmLen = strlen(confirmStr);
 
-    // Check if the string is long enough to contain "CONFIRM" at the end
     if (strLen < confirmLen) {
-        return 0; // False
+        return 0;
     }
-
-    // Compare the end of the string with "CONFIRM"
     return strcmp(str + strLen - confirmLen, confirmStr) == 0;
 }
 
@@ -97,6 +94,7 @@ struct request_access_token *
 request_access_token_func_1_svc(struct request_authorization *argp, struct svc_req *rqstp)
 {
 	static struct request_access_token  result;
+	printf("=============%s\n",argp->token);
 	if (endsWithConfirm(argp->token)){
 		for(int i = 0; i < usersIdDatabase.number_of_access_tokens; i++){
 			//Can be extracted in another function
@@ -106,9 +104,14 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 				delete_confirm(generated_token);
 
 				usersIdDatabase.access_token_list[i].access_token = generated_token;
-				usersIdDatabase.access_token_list[i].refresh_token = generate_access_token(usersIdDatabase.access_token_list[i].access_token);
 				usersIdDatabase.access_token_list[i].valability = global_valability;
 				usersIdDatabase.access_token_list[i].auto_refresh = argp->auto_refresh;
+
+				if(argp->auto_refresh == 1){
+					usersIdDatabase.access_token_list[i].refresh_token = generate_access_token(usersIdDatabase.access_token_list[i].access_token);
+				} else {
+					usersIdDatabase.access_token_list[i].refresh_token = strdup("");
+				}
 				
 
 				result.access_token = usersIdDatabase.access_token_list[i].access_token;
@@ -125,10 +128,15 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 
 		usersIdDatabase.access_token_list = realloc(usersIdDatabase.access_token_list, (usersIdDatabase.number_of_access_tokens + 1) * sizeof(AccessToken));
 		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token = generated_token;
-		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token = generate_access_token(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token);
 		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].client_id = strdup(argp->client_id);
 		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].valability = global_valability;
 		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].auto_refresh = argp->auto_refresh;
+
+		if(argp->auto_refresh == 1){
+			usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token = generate_access_token(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token);
+		} else {
+			usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token = strdup("");
+		}
 
 		result.access_token = strdup(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token);
 		result.refresh_token = strdup(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token);
@@ -138,6 +146,10 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 		usersIdDatabase.number_of_access_tokens++;
 		return &result;
 	} else {
+		result.access_token = strdup("");
+		result.refresh_token = strdup("");
+		result.validation_time = -1;
+		printf("====================================================\n");
 		result.error = strdup("REQUEST_DENIED");
 		return &result;
 	}
@@ -155,13 +167,21 @@ struct request_access_token* validate_delegated_action_func_1_svc(struct validat
 					strcpy(usersIdDatabase.access_token_list[i].access_token, result->access_token);
 					result->refresh_token = generate_access_token(result->access_token);
 					strcpy(usersIdDatabase.access_token_list[i].refresh_token, result->refresh_token);
+					usersIdDatabase.access_token_list[i].valability = global_valability;
 				} else {
+					result->access_token = strdup("");
+					result->refresh_token = strdup("");
+					result->validation_time = -1;
 					result->error = strdup("TOKEN_EXPIRED");
 					return result;
 				}
-
+				usersIdDatabase.access_token_list[i].valability--;
 				if (!is_in_resources(argp->accessed_resource)) {
+					result->access_token = strdup("");
+					result->refresh_token = strdup("");
+					result->validation_time = -1;
 					result->error = strdup("RESOURCE_NOT_FOUND");	
+					return result;
 				}
 
 				if(strcmp(argp->operation_type, "READ") == 0){
@@ -240,6 +260,9 @@ struct request_access_token* validate_delegated_action_func_1_svc(struct validat
 
 		}
 	}
+	result->access_token = strdup("");
+	result->refresh_token = strdup("");
+	result->validation_time = -1;
 	result->error = strdup("PERMISION_DENIED");
 
 	/*
@@ -252,11 +275,14 @@ struct request_access_token* validate_delegated_action_func_1_svc(struct validat
 char **
 approve_request_token_func_1_svc(char **argp, struct svc_req *rqstp)
 {
+	static char * result;
 	if(usersIdDatabase.approvals[global_current_line_approvals][0].name == NULL){
 		global_current_line_approvals++;
-		return argp;
+		printf("================%s\n",*argp);
+		result = strdup(*argp);
+		return &result;
 	}
-	static char * result;
+	printf("================%s\n",*argp);
 	char* signed_token = calloc(SIGNED_TOKEN_LEN, sizeof(char));
 	strcpy(signed_token, *argp);
 	strcat(signed_token, "CONFIRM");

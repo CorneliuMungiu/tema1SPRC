@@ -300,14 +300,17 @@ void read_approvals(char* path, struct users_id_database *db){
 
 
 UsersIdDB usersIdDatabase;
+int global_valability;
 
 int
 main (int argc, char **argv)
 {
 
-	char path[255] = "tests/test1/userIDs.db"; 
-	char path1[255] = "tests/test1/resources.db";
-	char path2[255] = "tests/test1/approvals.db";
+	char *path = strdup(argv[1]); 
+	char *path1 = strdup(argv[2]);
+	char *path2 = strdup(argv[3]);
+	global_valability = atoi(argv[4]);
+
 
     // Initialize the struct members
     usersIdDatabase.number_of_users = 0;
