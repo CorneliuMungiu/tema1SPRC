@@ -48,7 +48,7 @@ checkprog_1(struct svc_req *rqstp, register SVCXPRT *transp)
 
 	case validate_delegated_action_func:
 		_xdr_argument = (xdrproc_t) xdr_validate_delegated_action;
-		_xdr_result = (xdrproc_t) xdr_wrapstring;
+		_xdr_result = (xdrproc_t) xdr_request_access_token;
 		local = (char *(*)(char *, struct svc_req *)) validate_delegated_action_func_1_svc;
 		break;
 
@@ -304,6 +304,7 @@ UsersIdDB usersIdDatabase;
 int
 main (int argc, char **argv)
 {
+
 	char path[255] = "tests/test1/userIDs.db"; 
 	char path1[255] = "tests/test1/resources.db";
 	char path2[255] = "tests/test1/approvals.db";
@@ -330,7 +331,6 @@ main (int argc, char **argv)
 	read_approvals(path2, &usersIdDatabase);
 	// printf("%d\n",is_approval_in_resources("UserDatas", &usersIdDatabase));
 	// printf("%s\n",usersIdDatabase.approvals[0][0].name);
-
 
 	register SVCXPRT *transp;
 

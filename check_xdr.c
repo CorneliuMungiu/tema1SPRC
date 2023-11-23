@@ -14,6 +14,8 @@ xdr_request_authorization (XDR *xdrs, request_authorization *objp)
 		 return FALSE;
 	 if (!xdr_string (xdrs, &objp->token, ~0))
 		 return FALSE;
+	 if (!xdr_int (xdrs, &objp->auto_refresh))
+		 return FALSE;
 	return TRUE;
 }
 

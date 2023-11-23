@@ -21,6 +21,7 @@ extern "C" {
 struct request_authorization {
 	char *client_id;
 	char *token;
+	int auto_refresh;
 };
 typedef struct request_authorization request_authorization;
 
@@ -85,7 +86,6 @@ struct users_id_database {
 
 typedef struct users_id_database UsersIdDB;
 
-
 #define CHECKPROG 0x1DBC0
 #define CHECKVERS 1
 
@@ -97,8 +97,8 @@ extern  char ** request_authorization_func_1_svc(char **, struct svc_req *);
 extern  struct request_access_token * request_access_token_func_1(struct request_authorization *, CLIENT *);
 extern  struct request_access_token * request_access_token_func_1_svc(struct request_authorization *, struct svc_req *);
 #define validate_delegated_action_func 3
-extern  char ** validate_delegated_action_func_1(struct validate_delegated_action *, CLIENT *);
-extern  char ** validate_delegated_action_func_1_svc(struct validate_delegated_action *, struct svc_req *);
+extern  struct request_access_token * validate_delegated_action_func_1(struct validate_delegated_action *, CLIENT *);
+extern  struct request_access_token * validate_delegated_action_func_1_svc(struct validate_delegated_action *, struct svc_req *);
 #define approve_request_token_func 4
 extern  char ** approve_request_token_func_1(char **, CLIENT *);
 extern  char ** approve_request_token_func_1_svc(char **, struct svc_req *);
@@ -112,8 +112,8 @@ extern  char ** request_authorization_func_1_svc();
 extern  struct request_access_token * request_access_token_func_1();
 extern  struct request_access_token * request_access_token_func_1_svc();
 #define validate_delegated_action_func 3
-extern  char ** validate_delegated_action_func_1();
-extern  char ** validate_delegated_action_func_1_svc();
+extern  struct request_access_token * validate_delegated_action_func_1();
+extern  struct request_access_token * validate_delegated_action_func_1_svc();
 #define approve_request_token_func 4
 extern  char ** approve_request_token_func_1();
 extern  char ** approve_request_token_func_1_svc();

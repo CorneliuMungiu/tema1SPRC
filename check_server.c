@@ -108,6 +108,8 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 				usersIdDatabase.access_token_list[i].access_token = generated_token;
 				usersIdDatabase.access_token_list[i].refresh_token = generate_access_token(usersIdDatabase.access_token_list[i].access_token);
 				usersIdDatabase.access_token_list[i].valability = global_valability;
+				usersIdDatabase.access_token_list[i].auto_refresh = argp->auto_refresh;
+				
 
 				result.access_token = usersIdDatabase.access_token_list[i].access_token;
 				result.refresh_token = usersIdDatabase.access_token_list[i].refresh_token;
@@ -126,6 +128,7 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token = generate_access_token(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token);
 		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].client_id = strdup(argp->client_id);
 		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].valability = global_valability;
+		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].auto_refresh = argp->auto_refresh;
 
 		result.access_token = strdup(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token);
 		result.refresh_token = strdup(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token);
@@ -140,22 +143,110 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 	}
 }
 
-char **
-validate_delegated_action_func_1_svc(struct validate_delegated_action *argp, struct svc_req *rqstp)
+struct request_access_token* validate_delegated_action_func_1_svc(struct validate_delegated_action *argp, struct svc_req *rqstp)
 {
-	static char * result;
+	struct request_access_token* result = calloc(1,sizeof(struct request_access_token));
 	for (int i = 0; i < usersIdDatabase.number_of_access_tokens; i++){
 		if(strcmp(usersIdDatabase.access_token_list[i].access_token, argp->token) == 0) {
-			
+			if(usersIdDatabase.access_token_list[i].valability == 0){
+				if(usersIdDatabase.access_token_list[i].auto_refresh == 1){
+					//Free memory before the assignation to result
+					result->access_token = generate_access_token(usersIdDatabase.access_token_list[i].refresh_token);
+					strcpy(usersIdDatabase.access_token_list[i].access_token, result->access_token);
+					result->refresh_token = generate_access_token(result->access_token);
+					strcpy(usersIdDatabase.access_token_list[i].refresh_token, result->refresh_token);
+				} else {
+					result->error = strdup("TOKEN_EXPIRED");
+					return result;
+				}
+
+				if (!is_in_resources(argp->accessed_resource)) {
+					result->error = strdup("RESOURCE_NOT_FOUND");	
+				}
+
+				if(strcmp(argp->operation_type, "READ") == 0){
+					for(int j = 0; j < usersIdDatabase.number_of_approvals_colums; j++){
+						if(strcmp(argp->accessed_resource, usersIdDatabase.approvals[global_current_line_approvals][j].name) == 0){
+							if(usersIdDatabase.approvals[global_current_line_approvals][j].read == 1){
+								result->error = strdup("PERMISSION_GRANTED");
+								return result;
+							} else {
+								result->error = strdup("OPERATION_NOT_PERMITTED");
+								return result;
+							}
+						}
+					}
+				}
+
+				if(strcmp(argp->operation_type, "INSERT") == 0){
+					for(int j = 0; j < usersIdDatabase.number_of_approvals_colums; j++){
+						if(strcmp(argp->accessed_resource, usersIdDatabase.approvals[global_current_line_approvals][j].name) == 0){
+							if(usersIdDatabase.approvals[global_current_line_approvals][j].insert == 1){
+								result->error = strdup("PERMISSION_GRANTED");
+								return result;
+							} else {
+								result->error = strdup("OPERATION_NOT_PERMITTED");
+								return result;
+							}
+						}
+					}
+				}
+
+				if(strcmp(argp->operation_type, "MODIFY") == 0){
+					for(int j = 0; j < usersIdDatabase.number_of_approvals_colums; j++){
+						if(strcmp(argp->accessed_resource, usersIdDatabase.approvals[global_current_line_approvals][j].name) == 0){
+							if(usersIdDatabase.approvals[global_current_line_approvals][j].modify == 1){
+								result->error = strdup("PERMISSION_GRANTED");
+								return result;
+							} else {
+								result->error = strdup("OPERATION_NOT_PERMITTED");
+								return result;
+							}
+						}
+					}
+				}
+
+				if(strcmp(argp->operation_type, "DELETE") == 0){
+					for(int j = 0; j < usersIdDatabase.number_of_approvals_colums; j++){
+						if(strcmp(argp->accessed_resource, usersIdDatabase.approvals[global_current_line_approvals][j].name) == 0){
+							if(usersIdDatabase.approvals[global_current_line_approvals][j].delete == 1){
+								result->error = strdup("PERMISSION_GRANTED");
+								return result;
+							} else {
+								result->error = strdup("OPERATION_NOT_PERMITTED");
+								return result;
+							}
+						}
+					}
+				}
+
+				if(strcmp(argp->operation_type, "EXECUTE") == 0){
+					for(int j = 0; j < usersIdDatabase.number_of_approvals_colums; j++){
+						if(strcmp(argp->accessed_resource, usersIdDatabase.approvals[global_current_line_approvals][j].name) == 0){
+							if(usersIdDatabase.approvals[global_current_line_approvals][j].execute == 1){
+								result->error = strdup("PERMISSION_GRANTED");
+								return result;
+							} else {
+								result->error = strdup("OPERATION_NOT_PERMITTED");
+								return result;
+							}
+						}
+					}
+				}
+
+
+			}
+
+
 		}
 	}
-	result = strdup("PERMISION_DENIED");
+	result->error = strdup("PERMISION_DENIED");
 
 	/*
 	 * insert server code here
 	 */
 
-	return &result;
+	return result;
 }
 
 char **
