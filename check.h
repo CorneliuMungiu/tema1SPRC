@@ -63,6 +63,7 @@ struct access_token_refresh_token {
 	char *access_token;
 	char *refresh_token;
 	unsigned int valability;
+	unsigned int current_index_resource;
 	int8_t auto_refresh;
 };
 

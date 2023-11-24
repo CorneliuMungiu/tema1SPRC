@@ -48,6 +48,7 @@ int is_in_resources(char* resource){
 char **
 request_authorization_func_1_svc(char **argp, struct svc_req *rqstp)
 {
+	printf("BEGIN %s AUTHZ\n", *argp);
 	static char * result;
 	result = calloc(ERROR_LENGTH,sizeof(char));
 
@@ -56,6 +57,7 @@ request_authorization_func_1_svc(char **argp, struct svc_req *rqstp)
         if (strcmp(argp[0], usersIdDatabase.users[i]) == 0) {
             // User found in the database, generate and return an access token
             char *token = generate_access_token(argp[0]);
+			printf("  RequestToken = %s\n", token);
             strcpy(result, token);
             free(token); // Remember to free the allocated token after use
 			if(usersIdDatabase.number_of_authz_tokens == 0) {
@@ -86,7 +88,7 @@ request_authorization_func_1_svc(char **argp, struct svc_req *rqstp)
 
     // User not found in the database
     strcpy(result, "USER_NOT_FOUND");
-	printf("USER_NOT_FOUND\n");
+	// printf("USER_NOT_FOUND\n");
     return &result;
 }
 
@@ -94,7 +96,7 @@ struct request_access_token *
 request_access_token_func_1_svc(struct request_authorization *argp, struct svc_req *rqstp)
 {
 	static struct request_access_token  result;
-	printf("=============%s\n",argp->token);
+	// printf("=============%s\n",argp->token);
 	if (endsWithConfirm(argp->token)){
 		for(int i = 0; i < usersIdDatabase.number_of_access_tokens; i++){
 			//Can be extracted in another function
@@ -102,6 +104,7 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 				//memory leak
 				char* generated_token = generate_access_token(argp->token);
 				delete_confirm(generated_token);
+				printf("  AccessToken = %s\n", generated_token);
 
 				usersIdDatabase.access_token_list[i].access_token = generated_token;
 				usersIdDatabase.access_token_list[i].valability = global_valability;
@@ -109,6 +112,7 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 
 				if(argp->auto_refresh == 1){
 					usersIdDatabase.access_token_list[i].refresh_token = generate_access_token(usersIdDatabase.access_token_list[i].access_token);
+					printf("  RefreshToken = %s\n",usersIdDatabase.access_token_list[i].refresh_token);
 				} else {
 					usersIdDatabase.access_token_list[i].refresh_token = strdup("");
 				}
@@ -119,13 +123,13 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 				result.validation_time = global_valability;
 				strcpy(result.error, "");
 
-				printf("Modified:\n%s %s %s %d\n",usersIdDatabase.access_token_list[i].client_id,usersIdDatabase.access_token_list[i].access_token,usersIdDatabase.access_token_list[i].refresh_token,usersIdDatabase.access_token_list[i].valability);
+				// printf("Modified:\n%s %s %s %d\n",usersIdDatabase.access_token_list[i].client_id,usersIdDatabase.access_token_list[i].access_token,usersIdDatabase.access_token_list[i].refresh_token,usersIdDatabase.access_token_list[i].valability);
 				return &result;
 			}
 		}
 		char* generated_token = generate_access_token(argp->token);
 		delete_confirm(generated_token);
-
+		printf("  AccessToken = %s\n", generated_token);
 		usersIdDatabase.access_token_list = realloc(usersIdDatabase.access_token_list, (usersIdDatabase.number_of_access_tokens + 1) * sizeof(AccessToken));
 		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token = generated_token;
 		usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].client_id = strdup(argp->client_id);
@@ -134,6 +138,7 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 
 		if(argp->auto_refresh == 1){
 			usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token = generate_access_token(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token);
+			printf("  RefreshToken = %s\n",usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token);
 		} else {
 			usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token = strdup("");
 		}
@@ -142,14 +147,14 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 		result.refresh_token = strdup(usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token);
 		result.validation_time = global_valability;
 		result.error = strdup("");
-		printf("Added:\n%s %s %s %d\n",usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].client_id,usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token,usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token,usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].valability);
+		// printf("Added:\n%s %s %s %d\n",usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].client_id,usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].access_token,usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].refresh_token,usersIdDatabase.access_token_list[usersIdDatabase.number_of_access_tokens].valability);
 		usersIdDatabase.number_of_access_tokens++;
 		return &result;
 	} else {
 		result.access_token = strdup("");
 		result.refresh_token = strdup("");
 		result.validation_time = -1;
-		printf("====================================================\n");
+		// printf("====================================================\n");
 		result.error = strdup("REQUEST_DENIED");
 		return &result;
 	}
@@ -158,7 +163,10 @@ request_access_token_func_1_svc(struct request_authorization *argp, struct svc_r
 struct request_access_token* validate_delegated_action_func_1_svc(struct validate_delegated_action *argp, struct svc_req *rqstp)
 {
 	struct request_access_token* result = calloc(1,sizeof(struct request_access_token));
+	result->access_token = strdup("");
+	result->refresh_token = strdup("");
 	for (int i = 0; i < usersIdDatabase.number_of_access_tokens; i++){
+					// printf("[][][][%s| |%s][][][]%d\n", usersIdDatabase.access_token_list[i].access_token, argp->token,strcmp(usersIdDatabase.access_token_list[i].access_token, argp->token));
 		if(strcmp(usersIdDatabase.access_token_list[i].access_token, argp->token) == 0) {
 			if(usersIdDatabase.access_token_list[i].valability == 0){
 				if(usersIdDatabase.access_token_list[i].auto_refresh == 1){
@@ -166,32 +174,76 @@ struct request_access_token* validate_delegated_action_func_1_svc(struct validat
 					result->access_token = generate_access_token(usersIdDatabase.access_token_list[i].refresh_token);
 					strcpy(usersIdDatabase.access_token_list[i].access_token, result->access_token);
 					result->refresh_token = generate_access_token(result->access_token);
+					printf("BEGIN %s AUTHZ REFRESH\n",usersIdDatabase.access_token_list[i].client_id);
+					printf("  AccessToken = %s\n",result->access_token);
+					printf("  RefreshToken = %s\n",result->refresh_token);
 					strcpy(usersIdDatabase.access_token_list[i].refresh_token, result->refresh_token);
 					usersIdDatabase.access_token_list[i].valability = global_valability;
 				} else {
+					// printf("token expired\n");
 					result->access_token = strdup("");
-					result->refresh_token = strdup("");
+					printf("DENY (%s,%s,,%d)\n",argp->operation_type, argp->accessed_resource,usersIdDatabase.access_token_list[i].valability);
 					result->validation_time = -1;
 					result->error = strdup("TOKEN_EXPIRED");
 					return result;
 				}
+			}
 				usersIdDatabase.access_token_list[i].valability--;
+				char * access_to_show = strcmp(result->access_token, "") == 0 ? argp->token : result->access_token;
+				// printf("[%s]\n", argp->accessed_resource);
 				if (!is_in_resources(argp->accessed_resource)) {
-					result->access_token = strdup("");
-					result->refresh_token = strdup("");
+					// printf("resursa nu exista\n");
+					printf("DENY (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show,usersIdDatabase.access_token_list[i].valability);
 					result->validation_time = -1;
 					result->error = strdup("RESOURCE_NOT_FOUND");	
 					return result;
 				}
+				char* client_id = usersIdDatabase.access_token_list[i].client_id;
+				char * authz_token = NULL;
+				for (int j = 0; j < usersIdDatabase.number_of_authz_tokens; j++) {
+					if (strcmp(client_id, usersIdDatabase.authz_tokens[j].client_id) == 0) {
+						authz_token = usersIdDatabase.authz_tokens[j].token; // TODO check strdup
+						break;
+					}
+				}
+				if (authz_token == NULL) {
+					// printf("huioova\n\n");
+					return NULL;
+				}
+				ApprovalsDB* approvals = NULL;
+				for (int j = 0; j < usersIdDatabase.number_of_signed_tokens_permisions; j++) {
+					// printf("%s\n", usersIdDatabase.signed_tokens_permisions[j].token);
+					if (strncmp(usersIdDatabase.signed_tokens_permisions[j].token, authz_token, strlen(authz_token)) == 0) {
+						approvals = usersIdDatabase.signed_tokens_permisions[j].approvals;
+						break;
+					}
+				}
+				if (approvals == NULL) {
+					// printf("MAXIMALINA HUIVA");
+					return NULL;
+				}
 
+				// printf("\n\n===============############################================\n\n");
+				// for (int j = 0; j < usersIdDatabase.number_of_approvals_colums; j++) {
+				// 	printf("%s %d %d %d %d %d\n", approvals[j].name, approvals[j].read, approvals[j].modify, approvals[j].insert, approvals[j].delete, approvals[j].execute);
+				// }
+				// printf("\n\n=====================##########################################==========\n\n");
+
+				//TODO verificare de local
 				if(strcmp(argp->operation_type, "READ") == 0){
 					for(int j = 0; j < usersIdDatabase.number_of_approvals_colums; j++){
-						if(strcmp(argp->accessed_resource, usersIdDatabase.approvals[global_current_line_approvals][j].name) == 0){
-							if(usersIdDatabase.approvals[global_current_line_approvals][j].read == 1){
+						if(strcmp(argp->accessed_resource, approvals[j].name) == 0){
+							if(approvals[j].read == 1){
+								printf("PERMIT (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show, usersIdDatabase.access_token_list[i].valability);
 								result->error = strdup("PERMISSION_GRANTED");
+								
+						
+								result->validation_time = -1;
 								return result;
 							} else {
+								printf("DENY (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show, usersIdDatabase.access_token_list[i].valability);
 								result->error = strdup("OPERATION_NOT_PERMITTED");
+								result->validation_time = -1;
 								return result;
 							}
 						}
@@ -200,12 +252,18 @@ struct request_access_token* validate_delegated_action_func_1_svc(struct validat
 
 				if(strcmp(argp->operation_type, "INSERT") == 0){
 					for(int j = 0; j < usersIdDatabase.number_of_approvals_colums; j++){
-						if(strcmp(argp->accessed_resource, usersIdDatabase.approvals[global_current_line_approvals][j].name) == 0){
-							if(usersIdDatabase.approvals[global_current_line_approvals][j].insert == 1){
+						if(strcmp(argp->accessed_resource, approvals[j].name) == 0){
+							if(approvals[j].insert == 1){
+								printf("PERMIT (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show, usersIdDatabase.access_token_list[i].valability);
 								result->error = strdup("PERMISSION_GRANTED");
+								result->validation_time = -1;
 								return result;
 							} else {
+								printf("DENY (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show, usersIdDatabase.access_token_list[i].valability);
 								result->error = strdup("OPERATION_NOT_PERMITTED");
+								
+						
+								result->validation_time = -1;
 								return result;
 							}
 						}
@@ -214,12 +272,20 @@ struct request_access_token* validate_delegated_action_func_1_svc(struct validat
 
 				if(strcmp(argp->operation_type, "MODIFY") == 0){
 					for(int j = 0; j < usersIdDatabase.number_of_approvals_colums; j++){
-						if(strcmp(argp->accessed_resource, usersIdDatabase.approvals[global_current_line_approvals][j].name) == 0){
-							if(usersIdDatabase.approvals[global_current_line_approvals][j].modify == 1){
+						if(strcmp(argp->accessed_resource, approvals[j].name) == 0){
+							if(approvals[j].modify == 1){
+								printf("PERMIT (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show, usersIdDatabase.access_token_list[i].valability);
 								result->error = strdup("PERMISSION_GRANTED");
+								
+						
+								result->validation_time = -1;
 								return result;
 							} else {
+								printf("DENY (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show, usersIdDatabase.access_token_list[i].valability);
 								result->error = strdup("OPERATION_NOT_PERMITTED");
+								
+						
+								result->validation_time = -1;
 								return result;
 							}
 						}
@@ -228,12 +294,20 @@ struct request_access_token* validate_delegated_action_func_1_svc(struct validat
 
 				if(strcmp(argp->operation_type, "DELETE") == 0){
 					for(int j = 0; j < usersIdDatabase.number_of_approvals_colums; j++){
-						if(strcmp(argp->accessed_resource, usersIdDatabase.approvals[global_current_line_approvals][j].name) == 0){
-							if(usersIdDatabase.approvals[global_current_line_approvals][j].delete == 1){
+						if(strcmp(argp->accessed_resource, approvals[j].name) == 0){
+							if(approvals[j].delete == 1){
+								printf("PERMIT (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show, usersIdDatabase.access_token_list[i].valability);
 								result->error = strdup("PERMISSION_GRANTED");
+								
+						
+								result->validation_time = -1;
 								return result;
 							} else {
+								printf("DENY (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show, usersIdDatabase.access_token_list[i].valability);
 								result->error = strdup("OPERATION_NOT_PERMITTED");
+								
+						
+								result->validation_time = -1;
 								return result;
 							}
 						}
@@ -242,29 +316,35 @@ struct request_access_token* validate_delegated_action_func_1_svc(struct validat
 
 				if(strcmp(argp->operation_type, "EXECUTE") == 0){
 					for(int j = 0; j < usersIdDatabase.number_of_approvals_colums; j++){
-						if(strcmp(argp->accessed_resource, usersIdDatabase.approvals[global_current_line_approvals][j].name) == 0){
-							if(usersIdDatabase.approvals[global_current_line_approvals][j].execute == 1){
+						if(strcmp(argp->accessed_resource, approvals[j].name) == 0){
+							if(approvals[j].execute == 1){
+								printf("PERMIT (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show, usersIdDatabase.access_token_list[i].valability);
 								result->error = strdup("PERMISSION_GRANTED");
+								
+						
+								result->validation_time = -1;
 								return result;
 							} else {
+								printf("DENY (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show, usersIdDatabase.access_token_list[i].valability);
 								result->error = strdup("OPERATION_NOT_PERMITTED");
+								
+						
+								result->validation_time = -1;
 								return result;
 							}
 						}
 					}
 				}
-
-
-			}
-
-
+				printf("DENY (%s,%s,%s,%d)\n",argp->operation_type, argp->accessed_resource, access_to_show, usersIdDatabase.access_token_list[i].valability);
+				result->validation_time = -1;
+				result->error = strdup("OPERATION_NOT_PERMITTED");
+				return result;
 		}
 	}
-	result->access_token = strdup("");
-	result->refresh_token = strdup("");
+	printf("DENY (%s,%s,,0)\n",argp->operation_type, argp->accessed_resource);
 	result->validation_time = -1;
-	result->error = strdup("PERMISION_DENIED");
-
+	result->error = strdup("PERMISSION_DENIED");
+	// printf("permision_denie\n");
 	/*
 	 * insert server code here
 	 */
@@ -278,23 +358,25 @@ approve_request_token_func_1_svc(char **argp, struct svc_req *rqstp)
 	static char * result;
 	if(usersIdDatabase.approvals[global_current_line_approvals][0].name == NULL){
 		global_current_line_approvals++;
-		printf("================%s\n",*argp);
+		// printf("================%s\n",*argp);
 		result = strdup(*argp);
 		return &result;
 	}
-	printf("================%s\n",*argp);
+
+	// printf("================%s\n",*argp);
 	char* signed_token = calloc(SIGNED_TOKEN_LEN, sizeof(char));
 	strcpy(signed_token, *argp);
 	strcat(signed_token, "CONFIRM");
 	usersIdDatabase.signed_tokens_permisions = realloc(usersIdDatabase.signed_tokens_permisions, (usersIdDatabase.number_of_signed_tokens_permisions + 1) * sizeof(SignedTokenPermisions));
 	usersIdDatabase.signed_tokens_permisions[usersIdDatabase.number_of_signed_tokens_permisions].token = signed_token;
 	usersIdDatabase.signed_tokens_permisions[usersIdDatabase.number_of_signed_tokens_permisions].approvals = usersIdDatabase.approvals[global_current_line_approvals];
+
 	usersIdDatabase.number_of_signed_tokens_permisions++;
 	result = strdup(signed_token);
 	global_current_line_approvals++;
 
-	for(int i = 0; i < usersIdDatabase.number_of_signed_tokens_permisions; i++){
-		printf("%d = %s\n",i,usersIdDatabase.signed_tokens_permisions[i].token);
-	}
+	// for(int i = 0; i < usersIdDatabase.number_of_signed_tokens_permisions; i++){
+	// 	printf("%d = %s\n",i,usersIdDatabase.signed_tokens_permisions[i].token);
+	// }
 	return &result;
 }

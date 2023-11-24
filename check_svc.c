@@ -285,16 +285,16 @@ void read_approvals(char* path, struct users_id_database *db){
 			add_excepted_permision(db->approvals[i], db);
 	}
 	db->number_of_approvals_colums = db->number_of_resources;
-	for (int i = 0; i < db->number_of_approvals_lines; i++) {
-		for (int j = 0; j < db->number_of_approvals_colums; j ++) {
-			// if(&db->approvals[i][j].name == NULL){
+	// for (int i = 0; i < db->number_of_approvals_lines; i++) {
+	// 	for (int j = 0; j < db->number_of_approvals_colums; j ++) {
+	// 		// if(&db->approvals[i][j].name == NULL){
 
-				printf("%s ", db->approvals[i][j].name);
-				printf("%d %d %d %d %d\n",db->approvals[i][j].delete, db->approvals[i][j].execute, db->approvals[i][j].insert, db->approvals[i][j].modify, db->approvals[i][j].read);
-			// }
-		}
-		printf("\n");
-	}
+	// 			// printf("%s ", db->approvals[i][j].name);
+	// 			// printf("%d %d %d %d %d\n",db->approvals[i][j].delete, db->approvals[i][j].execute, db->approvals[i][j].insert, db->approvals[i][j].modify, db->approvals[i][j].read);
+	// 		// }
+	// 	}
+	// 	printf("\n");
+	// }
     fclose(file);
 }
 
@@ -305,6 +305,7 @@ int global_valability;
 int
 main (int argc, char **argv)
 {
+	setvbuf(stdout, NULL,_IONBF, 0);
 
 	char *path = strdup(argv[1]); 
 	char *path1 = strdup(argv[2]);

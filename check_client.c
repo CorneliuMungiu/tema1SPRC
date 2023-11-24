@@ -61,6 +61,9 @@ checkprog_1(char *host)
     char line[LINE_LENGTH];
 
 	 while (fgets(line, sizeof(line), file) != NULL) {
+		if (line[strlen(line) - 1] == '\n'){
+			line[strlen(line) - 1] = '\0';
+		}
 		char *client_id = strtok(line, ",");
 		char *action = strtok(NULL, ",");
 		char *resource = strtok(NULL, ",");
@@ -91,10 +94,14 @@ checkprog_1(char *host)
 				if (request_access_token == (struct request_access_token *) NULL) {
 					clnt_perror (clnt, "call failed");
 				}
+				if (strcmp(request_access_token->error, "") != 0) {
+					printf("%s\n", request_access_token->error);
+					continue;
+				}
 				find->access_token = request_access_token->access_token;
 				printf("%s -> %s", find->auth_token, find->access_token);
 				if(strcmp(request_access_token->refresh_token, "") != 0){
-					printf(", %s\n",request_access_token->refresh_token);
+					printf(",%s\n",request_access_token->refresh_token);
 				} else {
 					printf("\n");
 				}
@@ -110,10 +117,7 @@ checkprog_1(char *host)
 				printf("%s\n", auth_token);
 				continue;
 			}
-			db.clients_list = realloc(db.clients_list, (db.number_of_clients + 1) * sizeof(ClientsList));
-			db.clients_list[db.number_of_clients].client_id = strdup(client_id);
-			db.clients_list[db.number_of_clients].auth_token = auth_token;
-			char **signed_auth_token_return = approve_request_token_func_1(&db.clients_list[db.number_of_clients].auth_token, clnt);
+			char **signed_auth_token_return = approve_request_token_func_1(auth_token_return, clnt);
 			if (signed_auth_token_return == (char **) NULL) {
 					clnt_perror (clnt, "call failed");
 			}
@@ -126,6 +130,13 @@ checkprog_1(char *host)
 			if (request_access_token == (struct request_access_token *) NULL) {
 					clnt_perror (clnt, "call failed");
 			}
+			if (strcmp(request_access_token->error, "") != 0) {
+				printf("%s\n", request_access_token->error);
+				continue;
+			}
+			db.clients_list = realloc(db.clients_list, (db.number_of_clients + 1) * sizeof(ClientsList));
+			db.clients_list[db.number_of_clients].client_id = strdup(client_id);
+			db.clients_list[db.number_of_clients].auth_token = auth_token;
 			db.clients_list[db.number_of_clients].access_token = request_access_token->access_token;
 			db.number_of_clients++;
 			if(strcmp(request_access_token->error, "") != 0){
@@ -134,13 +145,45 @@ checkprog_1(char *host)
 			}
 			printf("%s -> %s", db.clients_list[db.number_of_clients -1].auth_token, db.clients_list[db.number_of_clients -1 ].access_token);
 			if(strcmp(request_access_token->refresh_token, "") != 0){
-					printf(", %s\n",request_access_token->refresh_token);
+					printf(",%s\n",request_access_token->refresh_token);
 			} else {
 					printf("\n");
 			}
 		} else {
-			
+			// printf("asdadasdasdasdasdasdasd\n");
+			int exits = 0;
+			for(int i = 0; i < db.number_of_clients; i++){
+				if(strcmp(db.clients_list[i].client_id, client_id) == 0) {
+					exits = 1;
+					struct validate_delegated_action validate_delegated_action_arg;
+					validate_delegated_action_arg.accessed_resource = strdup(resource);
+					validate_delegated_action_arg.operation_type = strdup(action);
+					validate_delegated_action_arg.token = strdup(db.clients_list[i].access_token);
+					result_2 = validate_delegated_action_func_1(&validate_delegated_action_arg, clnt);
 
+					if (result_2 == (struct request_access_token *) NULL) {
+						clnt_perror (clnt, "call failed");
+					}
+					if (strcmp(result_2->access_token, "") != 0) {
+						db.clients_list[i].access_token = strdup(result_2->access_token);
+					}
+					
+					printf("%s\n", result_2->error);
+				}
+			}
+			if (!exits) {
+				// printf("nu exista user\n");
+				struct validate_delegated_action validate_delegated_action_arg;
+				validate_delegated_action_arg.accessed_resource = strdup(resource);
+				validate_delegated_action_arg.operation_type = strdup(action);
+				validate_delegated_action_arg.token = strdup(client_id);
+				result_2 = validate_delegated_action_func_1(&validate_delegated_action_arg, clnt);
+
+				if (result_2 == (struct request_access_token *) NULL) {
+					clnt_perror (clnt, "call failed");
+				}
+				printf("%s\n", result_2->error);
+			}
 		}
 	 }
 	
